@@ -1,0 +1,16 @@
+{
+  "name": "modbus-rtu-master",
+  "version": "0.1.0",
+  "description": "The master controller of modbus-rtu protocol",
+  "author": "Nanchao Inc.",
+  "main": "src/index.js",
+  "ruff": {
+    "dependencies": {
+      "rs485-uart": "0.1.0"
+    }
+  },
+  "devDependencies": {
+    "eslint": "^3.0.1",
+    "ruff-standard": "^0.1.6"
+  }
+}

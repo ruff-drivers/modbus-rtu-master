@@ -1,0 +1,9 @@
+{
+    "env": {
+        "node": true
+    },
+    "extends": "./node_modules/ruff-standard/eslint-base.json",
+    "globals": {
+        "$": true
+    }
+}
