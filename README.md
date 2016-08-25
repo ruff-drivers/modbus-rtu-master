@@ -77,11 +77,11 @@ Function code 0x06, it is used to write a single holding register in a remote de
 - **value:** The value to be set to the holding register.
 - **callback:** No argument other than a possible error is given to the completion callback.
 
-### `writeMultipleCoils(slaveAddress, startAddress, quantity, vaules, callback)`
+### `writeMultipleCoils(slaveAddress, startAddress, quantity, states, callback)`
 Function code 0x0F, it is used to force each coil in a sequence of coils to either `ON` or `OFF` in a remote device.
 - **slaveAddress:** The address of the remote device.
 - **startAddress:** The starting address of the coils to be written to.
-- **vaules:** The values to be written to the coils. The `values` is an array with `1` or `0` as its element, here `1` means `ON` and `0` means `OFF`.
+- **states:** The states to be written to the coils. The `states` is an array with `1` or `0` as its element, here `1` means `ON` and `0` means `OFF`.
 - **callback:** No argument other than a possible error is given to the completion callback.
 
 ### `writeMultipleRegisters(slaveAddress, startAddress, values, callback)`
