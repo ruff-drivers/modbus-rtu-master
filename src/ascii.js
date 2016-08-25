@@ -118,9 +118,9 @@ function indexOfBuffer(buffer, subBuffer) {
         match = false;
     } else {
         for (i = 0; i < bufferLength; i++) {
-            if (buffer[i] === subBuffer[0]) {
+            if (buffer.readUInt8(i) === subBuffer.readUInt8(0)) {
                 for (j = 0; j < subBufferLength; j++) {
-                    if (buffer[i + j] !== subBuffer[j]) {
+                    if (buffer.readUInt8(i + j) !== subBuffer.readUInt8(j)) {
                         break;
                     }
                 }

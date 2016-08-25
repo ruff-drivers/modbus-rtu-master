@@ -38,12 +38,12 @@ Rtu.prototype._setupTimer = function () {
 
 Rtu.prototype._emit = function () {
     var data = this._decode(this._buffer);
-    console.log('codec get data is ', this._buffer.toString('hex'));
+    //console.log('codec get data is ', this._buffer);
     if (data === null) {
         console.log('emit errorMessage', Date.now());
         this.emit('errorMessage', 'Invalid checksum');
     } else {
-        console.log('emit message', Date.now());
+        //console.log('emit message', Date.now());
         this.emit('message', data);
     }
     this._buffer = new Buffer(0);
@@ -66,7 +66,7 @@ Rtu.prototype._decode = function (buffer) {
         return null;
     }
     var crcValue = buffer.readUInt16LE(buffer.length - 2);
-    var bufferDecoded = buffer.slice(0, -2);
+    var bufferDecoded = buffer.slice(0, buffer.length - 2);
     if (crc16(bufferDecoded) !== crcValue) {
         return null;
     }

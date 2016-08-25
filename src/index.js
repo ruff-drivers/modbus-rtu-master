@@ -186,18 +186,18 @@ ModbusRtuMaster.prototype._writeMultiple = function (requestHandler, parseHandle
                 return;
             }
             var response = parseHandler(data);
-            checkResponseHandler(response, undefined, callback);
+            checkResponseHandler(response, 'quantity', callback);
         });
     });
 };
 
 // Modbus "Write Multiple Coils" (FC=0x0F)
-ModbusRtuMaster.prototype.writeMultipleCoils = function (slaveAddress, startAddress, values, callback) {
+ModbusRtuMaster.prototype.writeMultipleCoils = function (slaveAddress, startAddress, states, callback) {
     var master = this._master;
     this._writeMultiple(
-        master.requestWriteMultipleCoils.bind(master, slaveAddress, startAddress, values),
+        master.requestWriteMultipleCoils.bind(master, slaveAddress, startAddress, states),
         master.parseWriteMultipleCoilsResponse.bind(master),
-        this._checkResponseHandler(this, slaveAddress, 0x0F),
+        this._checkResponse.bind(this, slaveAddress, 0x0F),
         callback
     );
 };
@@ -207,7 +207,7 @@ ModbusRtuMaster.prototype.writeMultipleRegisters = function (slaveAddress, start
     this._writeMultiple(
         master.requestWriteMultipleRegisters.bind(master, slaveAddress, startAddress, values),
         master.parseWriteMultipleRegistersResponse.bind(master),
-        this._checkResponseHandler(this, slaveAddress, 0x10),
+        this._checkResponse.bind(this, slaveAddress, 0x10),
         callback
     );
 };

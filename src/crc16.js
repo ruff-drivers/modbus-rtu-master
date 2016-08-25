@@ -18,7 +18,7 @@ var TABLE = [0x0000, 0xc0c1, 0xc181, 0x0140, 0xc301, 0x03c0, 0x0280, 0xc241, 0xc
 //     }
 //     crc = previous !== null ? ~~previous : 0xffff;
 //     for (i = 0, length = buffer.length; i < length; i++) {
-//         byte = buffer[i];
+//         byte = buffer.readUInt8(i);
 //         crc = (TABLE[(crc ^ byte) & 0xff] ^ (crc >> 8)) & 0xffff;
 //     }
 //     return crc;
@@ -30,7 +30,7 @@ module.exports = function crc16(buffer) {
     var odd;
 
     for (var i = 0; i < buffer.length; i++) {
-        crc = crc ^ buffer[i];
+        crc = crc ^ buffer.readUInt8(i);
 
         for (var j = 0; j < 8; j++) {
             odd = crc & 0x0001;

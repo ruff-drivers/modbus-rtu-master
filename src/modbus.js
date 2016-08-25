@@ -120,17 +120,17 @@ Modbus.prototype.requestWriteSingleRegister = function (slaveAddress, address, v
 };
 
 // Request Modbus "Write Multiple Coils" (FC=0x0F)
-Modbus.prototype.requestWriteMultipleCoils = function (slaveAddress, startAddress, values, callback) {
+Modbus.prototype.requestWriteMultipleCoils = function (slaveAddress, startAddress, states, callback) {
     var functionCode = 0x0F;
     var buffer = new Buffer(6);
 
     buffer.writeUInt8(slaveAddress, 0);
     buffer.writeUInt8(functionCode, 1);
     buffer.writeUInt16BE(startAddress, 2);
-    buffer.writeUInt16BE(values.length, 4);
+    buffer.writeUInt16BE(states.length, 4);
 
-    var valuesBuffer = bitsToBuffer(values);
-    var bufferAll = Buffer.concat([buffer, valuesBuffer]);
+    var statesBuffer = bitsToBuffer(states);
+    var bufferAll = Buffer.concat([buffer, statesBuffer]);
 
     this._writeData(bufferAll, callback);
 };
@@ -344,13 +344,13 @@ Modbus.prototype.parseWriteSingleCoilResponse = function (buffer) {
 
     if (functionCode === 0x05) {
         var address = buffer.readUInt16BE(2);
-        var value = buffer.readUInt16BE(4) === 0xFF00 ? 1 : 0;
+        var state = buffer.readUInt16BE(4) === 0xFF00 ? 1 : 0;
 
         return {
             slaveAddress: slaveAddress,
             functionCode: functionCode,
             address: address,
-            value: value
+            state: state
         };
     } else if (functionCode === 0x85) {
         var exceptionCode = buffer.readUInt8(2);
@@ -419,11 +419,11 @@ Modbus.prototype._parseWriteMultipleResponse = function (buffer, expectFunctionC
 
 // Parse "Write Multiple Coils" (FC=0x0F) Response
 Modbus.prototype.parseWriteMultipleCoilsResponse = function (buffer) {
-    this._parseWriteMultipleResponse(buffer, 0x0F);
+    return this._parseWriteMultipleResponse(buffer, 0x0F);
 };
 // Parse "Write Multiple Registers" (FC=0x10) Response
 Modbus.prototype.parseWriteMultipleRegistersResponse = function (buffer) {
-    this._parseWriteMultipleResponse(buffer, 0x10);
+    return this._parseWriteMultipleResponse(buffer, 0x10);
 };
 
 /*
@@ -490,14 +490,14 @@ function bitsToBuffer(bits) {
     var i;
 
     buffer.fill(0x00);
-    buffer[0] = buffer.length - 1;
+    buffer.writeUInt8(buffer.length - 1, 0);
 
     for (var index = 0; index < bits.length; index++) {
         i = Math.floor(index / 8) + 1;
 
-        buffer[i] >>= 1;
+        buffer.writeUInt8(buffer.readUInt8(i) >> 1, i);
         if (bits[index]) {
-            buffer[i] |= 0x80;
+            buffer.writeUInt8(buffer.readUInt8(i) | 0x80, i);
         }
     }
 
@@ -505,7 +505,7 @@ function bitsToBuffer(bits) {
     if (i > 0) {
         i = 8 - i;
         while (i > 0) {
-            buffer[buffer.length - 1] >>= 1;
+            buffer.writeUInt8(buffer.readUInt8(buffer.length - 1) >> 1, buffer.length - 1);
             i -= 1;
         }
     }
@@ -516,9 +516,9 @@ function bitsToBuffer(bits) {
 function bufferToBits(buffer) {
     var bits = [];
 
-    for (var i = 1; i < Math.min(buffer.length, buffer[0] + 1); i++) {
+    for (var i = 1; i < Math.min(buffer.length, buffer.readUInt8(0) + 1); i++) {
         for (var j = 0; j < 8; j++) {
-            bits.push((buffer[i] >> j) & 0x1);
+            bits.push((buffer.readUInt8(i) >> j) & 0x1);
         }
     }
 
