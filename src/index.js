@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2016 Nanchao Inc.
+ * Copyright (c) 2017 Nanchao Inc.
  * All rights reserved.
  */
 
@@ -7,14 +7,15 @@
 
 var Modbus = require('./modbus');
 
-function ModbusRtuMaster(port, charTimeout, responseTimeout) {
-    this._responseTimeout = responseTimeout || 500;
-    this._option = {
-        mode: 'rtu',
-        timeout: charTimeout || 50
-    };
+function ModbusRtuMaster(port, options) {
+    options = options || {};
+    this._responseTimeout = options.responseTimeout || 500;
 
-    this._master = new Modbus(port, this._option);
+    this._master = new Modbus(port, {
+        mode: 'rtu',
+        timeout: options.charTimeout || 50,
+        converted: options.converted || false
+    });
 }
 
 Object.defineProperties(ModbusRtuMaster.prototype, {
@@ -30,10 +31,8 @@ Object.defineProperties(ModbusRtuMaster.prototype, {
 
 ModbusRtuMaster.prototype._getresponse = function (timeout, callback) {
     var that = this;
-    // console.log('wait response', Date.now());
     var timer = setTimeout(function () {
         removeListener();
-        // console.log('response timeout', Date.now());
         callback(new Error('Response timed out'));
     }, timeout);
 
@@ -83,7 +82,6 @@ ModbusRtuMaster.prototype._readStatus = function (requestHandler, parseHandler, 
                 callback(error);
                 return;
             }
-            // console.log('master receive is ', data);
             var response = parseHandler(data);
             checkResponseHandler(response, 'status', callback);
         });

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2016 Nanchao Inc.
+ * Copyright (c) 2017 Nanchao Inc.
  * All rights reserved.
  */
 

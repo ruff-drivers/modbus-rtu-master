@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2016 Nanchao Inc.
+ * Copyright (c) 2017 Nanchao Inc.
  * All rights reserved.
  */
 
@@ -20,8 +20,7 @@ util.inherits(Ascii, EventEmitter);
 Ascii.prototype.pushCodedStream = function (data) {
     this._buffer = Buffer.concat([this._buffer, data]);
 
-    // var startIndex = this._buffer.indexOf(':');
-    var startIndex = indexOfBuffer(this._buffer, new Buffer(':'));
+    var startIndex = this._buffer.indexOf(':');
     if (startIndex === -1) {
         // if not there, reset the buffer and return
         this._buffer = new Buffer(0);
@@ -33,9 +32,8 @@ Ascii.prototype.pushCodedStream = function (data) {
     }
     this._setupTimer();
 
-    // console.log(this._buffer);
     // do we have the complete message (i.e. are the end delimiters there)
-    if (indexOfBuffer(this._buffer, new Buffer('\r\n')) >= 0) {
+    if (this._buffer.indexOf('\r\n') >= 0) {
         this._emit();
     } else {
         // otherwise just wait for more data to arrive
@@ -54,7 +52,6 @@ Ascii.prototype._timeoutHandle = function () {
 
 Ascii.prototype._emit = function () {
     var _data = this._decode(this._buffer);
-    // (_data !== null) && that.emit('data', _data);
     if (_data === null) {
         this.emit('error', new Error('Invalid checksum'));
     } else {
@@ -85,8 +82,7 @@ Ascii.prototype.encode = function (buffer) {
 };
 
 Ascii.prototype._decode = function (buffer) {
-    // var endIndex = buffer.indexOf('\n');
-    var endIndex = indexOfBuffer(buffer, new Buffer('\n'));
+    var endIndex = buffer.indexOf('\n');
     var bufferToDecode = buffer.slice(0, endIndex + 1);
 
     // create a new buffer of the correct size (based on ascii encoded buffer length)
@@ -107,35 +103,5 @@ Ascii.prototype._decode = function (buffer) {
 
     return bufferDecoded;
 };
-
-function indexOfBuffer(buffer, subBuffer) {
-    var bufferLength = buffer.length;
-    var subBufferLength = subBuffer.length;
-    var match = false;
-    var i;
-    var j;
-    if (bufferLength === 0 || subBufferLength === 0 || subBufferLength > bufferLength) {
-        match = false;
-    } else {
-        for (i = 0; i < bufferLength; i++) {
-            if (buffer.readUInt8(i) === subBuffer.readUInt8(0)) {
-                for (j = 0; j < subBufferLength; j++) {
-                    if (buffer.readUInt8(i + j) !== subBuffer.readUInt8(j)) {
-                        break;
-                    }
-                }
-            }
-            if (j === subBufferLength) {
-                match = true;
-                break;
-            }
-        }
-    }
-    if (match) {
-        return i;
-    } else {
-        return -1;
-    }
-}
 
 module.exports = Ascii;

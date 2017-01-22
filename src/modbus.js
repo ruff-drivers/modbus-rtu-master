@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2016 Nanchao Inc.
+ * Copyright (c) 2017 Nanchao Inc.
  * All rights reserved.
  */
 
@@ -7,37 +7,31 @@
 
 var EventEmitter = require('events');
 var util = require('util');
-var Rtu = require('./rtu');
-var Ascii = require('./ascii');
 
 function Modbus(port, option) {
     EventEmitter.call(this);
 
     this._port = port;
     this._write = port.write.bind(port);
-    // this._read = port.read.bind(port);
 
+    option = option || {};
     this._timeout = option.timeout || 4;
     this._mode = option.mode || 'rtu';
+    this._convert = option.converted || false;
 
     if (this._mode === 'rtu') {
-        // this._codec = new Rtu(this, this._timeout);
-        // this._codec = new Rtu(this._port, this._timeout);
+        var Rtu = require('./rtu');
         this._codec = new Rtu(this._timeout);
     } else if (this._mode === 'ascii') {
-        // this._codec = new Ascii(this, this._timeout);
-        // this._codec = new Ascii(this._port, this._timeout);
+        var Ascii = require('./ascii');
         this._codec = new Ascii(this._timeout);
     } else {
         throw Error('Unknow mode, please use `rtu` or `ascii` mode');
     }
 
-    this._encode = this._codec.encode.bind(this._codec);
-    this._pushCodedStream = this._codec.pushCodedStream.bind(this._codec);
-
     var that = this;
     this._port.on('data', function (data) {
-        that._pushCodedStream(data);
+        that._codec.pushCodedStream(data);
     });
 
     this._port.on('error', function (error) {
@@ -45,20 +39,18 @@ function Modbus(port, option) {
     });
 
     this._codec.on('message', function (data) {
-        // console.log('data detected', data);
         that.emit('message', data);
     });
     this._codec.on('errorMessage', function (error) {
         that.emit('errorMessage', error);
     });
-    // this.read();
 }
 
 util.inherits(Modbus, EventEmitter);
 
 // encode data and write to port
 Modbus.prototype._writeData = function (buffer, callback) {
-    var bufferCoded = this._encode(buffer);
+    var bufferCoded = this._codec.encode(buffer);
     this._write(bufferCoded, callback);
 };
 
@@ -154,58 +146,6 @@ Modbus.prototype.requestWriteMultipleRegisters = function (slaveAddress, address
     this._writeData(buffer, callback);
 };
 
-// Modbus.prototype.read = function () {
-//     var that = this;
-
-//     next();
-
-//     function next() {
-//         that._read(function (error, data) {
-//             if (error) {
-//                 that.emit('error', error);
-//             } else {
-//                 console.log('reader emit data is ', data.toString('hex'));
-//                 that.emit('data', data);
-//                 next();
-//             }
-//         });
-//     }
-// };
-
-// Modbus read
-// Modbus.prototype.read = function (callback) {
-//     var that = this;
-//     var readDone = false;
-//     this._codec.on('data', function (data) {
-//         readDone = true;
-//         console.log('decoded data is', data);
-//         that._codec.removeAllListeners('data');
-//         that._codec.removeAllListeners('error');
-//         callback(undefined, data);
-//     });
-//     this._codec.on('error', function (error) {
-//         readDone = true;
-//         that._codec.removeAllListeners('data');
-//         that._codec.removeAllListeners('error');
-//         callback(error);
-//     });
-//     next();
-
-//     function next() {
-//         if (!readDone) {
-//             that._read(function (error, data) {
-//                 if (error) {
-//                     callback(error);
-//                     return;
-//                 }
-//                 that.emit('data', data);
-
-//                 next();
-//             });
-//         }
-//     }
-// };
-
 // Response Exception
 Modbus.prototype.responseError = function (slaveAddress, functionCode, exceptionCode, callback) {
     var buffer = new Buffer(3);
@@ -252,7 +192,7 @@ Modbus.prototype.responseReadHoldingRegisters = function (slaveAddress, holdingR
     this._responseRegisters(slaveAddress, 0x03, holdingRegisters, callback);
 };
 // Response Modbus "Read Input Registers" (FC=0x04)
-Modbus.prototype.responseInputRegisters = function (slaveAddress, InputRegisters, callback) {
+Modbus.prototype.responseReadInputRegisters = function (slaveAddress, InputRegisters, callback) {
     this._responseRegisters(slaveAddress, 0x04, InputRegisters, callback);
 };
 
@@ -295,18 +235,15 @@ Modbus.prototype.responseWriteMultipleRegisters = function (slaveAddress, startA
 Modbus.prototype._parseReadStatusResponse = function (quantity, buffer, expectFunctionCode, convertHandler) {
     var slaveAddress = buffer.readUInt8(0);
     var functionCode = buffer.readUInt8(1);
-
     if (functionCode === expectFunctionCode) {
         var byteCount = buffer.readUInt8(2);
         var statusBuffer = buffer.slice(2);
-
-        var status = convertHandler(statusBuffer);
-
+        var status = this._convert ? convertHandler(statusBuffer).slice(0, quantity) : statusBuffer.slice(1);
         return {
             slaveAddress: slaveAddress,
             functionCode: functionCode,
             byteCount: byteCount,
-            status: status.slice(0, quantity)
+            status: status
         };
     } else if (functionCode === (expectFunctionCode | 0x80)) {
         var exceptionCode = buffer.readUInt8(2);
@@ -330,11 +267,11 @@ Modbus.prototype.parseReadDiscreteInputsResponse = function (quantity, buffer) {
 };
 // Parse "Read Holding Registers" (FC=0x03) Response
 Modbus.prototype.parseReadHoldingRegistersResponse = function (quantity, buffer) {
-    return this._parseReadStatusResponse(quantity, buffer, 0x03, bufferToRegisters);
+    return this._parseReadStatusResponse(quantity * 2, buffer, 0x03, bufferToRegisters);
 };
 // Parse "Read Input Registers" (FC=0x04) Response
 Modbus.prototype.parseReadInputRegistersResponse = function (quantity, buffer) {
-    return this._parseReadStatusResponse(quantity, buffer, 0x04, bufferToRegisters);
+    return this._parseReadStatusResponse(quantity * 2, buffer, 0x04, bufferToRegisters);
 };
 
 // Parse "Write Single Coil" (FC=0x05) Response
@@ -344,7 +281,12 @@ Modbus.prototype.parseWriteSingleCoilResponse = function (buffer) {
 
     if (functionCode === 0x05) {
         var address = buffer.readUInt16BE(2);
-        var state = buffer.readUInt16BE(4) === 0xFF00 ? 1 : 0;
+        var state;
+        if (this._convert) {
+            state = buffer.readUInt16BE(4) === 0xFF00 ? 1 : 0;
+        } else {
+            state = buffer.slice(4, 6);
+        }
 
         return {
             slaveAddress: slaveAddress,
@@ -370,7 +312,7 @@ Modbus.prototype.parseWriteSingleRegisterResponse = function (buffer) {
 
     if (functionCode === 0x06) {
         var address = buffer.readUInt16BE(2);
-        var value = buffer.readUInt16BE(4);
+        var value = this._convert ? buffer.readUInt16BE(4) : buffer.slice(4, 6);
 
         return {
             slaveAddress: slaveAddress,
@@ -425,65 +367,6 @@ Modbus.prototype.parseWriteMultipleCoilsResponse = function (buffer) {
 Modbus.prototype.parseWriteMultipleRegistersResponse = function (buffer) {
     return this._parseWriteMultipleResponse(buffer, 0x10);
 };
-
-/*
-Modbus.prototype.parseReadCoilsResponse = function (quantity, buffer) {
-    console.log('coil is ', buffer);
-    var slaveAddress = buffer.readUInt8(0);
-    var functionCode = buffer.readUInt8(1);
-
-    if (functionCode === 0x02) {
-        var byteCount = buffer.readUInt8(2);
-        var coilStatusBuffer = buffer.slice(2);
-
-        var coilStatus = bufferToBits(coilStatusBuffer);
-
-        return {
-            slaveAddress: slaveAddress,
-            functionCode: functionCode,
-            byteCount: byteCount,
-            status: coilStatus(0, quantity)
-        };
-    } else if (functionCode === 0x82) {
-        var exceptionCode = buffer.readUInt8(2);
-        return {
-            slaveAddress: slaveAddress,
-            functionCode: functionCode,
-            exceptionCode: exceptionCode
-        };
-    } else {
-        throw new Error('Invalid function code to be parsed');
-    }
-};
-
-Modbus.prototype.parseReadDiscreteInputsResponse = function (quantity, buffer) {
-    var slaveAddress = buffer.readUInt8(0);
-    var functionCode = buffer.readUInt8(1);
-
-    if (functionCode === 0x02) {
-        var byteCount = buffer.readUInt8(2);
-        var inputStatusBuffer = buffer.slice(2);
-
-        var inputStatus = bufferToBits(inputStatusBuffer);
-
-        return {
-            slaveAddress: slaveAddress,
-            functionCode: functionCode,
-            byteCount: byteCount,
-            status: inputStatus(0, quantity)
-        };
-    } else if (functionCode === 0x82) {
-        var exceptionCode = buffer.readUInt8(2);
-        return {
-            slaveAddress: slaveAddress,
-            functionCode: functionCode,
-            exceptionCode: exceptionCode
-        };
-    } else {
-        throw new Error('Invalid function code to be parsed');
-    }
-};
-*/
 
 function bitsToBuffer(bits) {
     var buffer = new Buffer(Math.ceil(bits.length / 8) + 1);

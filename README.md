@@ -1,6 +1,6 @@
-# Modbus-rtu Master Driver for Ruff
+# Modbus-rtu Master Module for Ruff
 
-The master controller of modbus-rtu protocol.
+The master controller of modbus protocol of RTU mode.
 
 The supported function codes are listed ad follows:
 * FC 0x01 "Read Coils"
@@ -14,54 +14,71 @@ The supported function codes are listed ad follows:
 
 Please reference [Modbus Application Protocol](www.modbus.org/docs/Modbus_Application_Protocol_V1_1b3.pdf) for more information.
 
-## Supported Engines
+## Usage
 
-* Ruff: ~1.2.0
+Here is the basic usage of this module.
 
-## Installing
+```js
+var ModbusRtuMaster = require('modbus-rtu-master');
 
-Execute following command and enter a **supported model** to install.
+rs485 = $('#rs485');
+var modbus = new ModbusRtuMaster(rs485, {
+    convert: true,
+    charTimeout: 30
+});
+var slaveAddress = 0x01;
+var startAddress = 0x03e8;
+var quantity = 8;
+modbus.readHoldingRegisters(slaveAddress, startAddress, quantity, function (error, values) {
+    if (error) {
+        console.log('Error is', error);
+        return;
+    }
+    console.log('data is', values);
+});
 
-```sh
-# Please replace `<device-id>` with a proper ID.
-# And this will be what you are going to query while `$('#<device-id>')`.
-rap device add <device-id>
-
-# Then enter a supported model, for example:
-# ? model: lcd1602-02
 ```
 
 ## API References
 
 ### Methods
 
+#### Class `ModbusRtuMaster(port, options)`
+The constructor function.
+- **port:** The communication port that modbus relies on, usually the port is an `UART`.
+- **options:** Some configrations to parse data from the port using mobus protocol.
+  - **responseTimeout:** Optional. The response timeout of one modbus command. The default value is 500 milliseconds.
+  - **charTimeout:** Optional. The minimum timestamp difference between two continuously modbus frames. The default value is 50 is milliseconds.
+  - **converted:** Optional. `converted` is an boolean, when it is `true`, the response data will be converted to an readable `Array` format according the modbus protocol,
+  otherwise, the response data will be in format of `Buffer`. The defalue vlaue is `false`.
+
 #### `readCoils(slaveAddress, startAddress, quantity, callback)`
 Function code 0x01, it is used to read from 1 to 2000 contiguous status of coils in a remote device.
 - **slaveAddress:** The address of the remote device.
 - **startAddress:** The starting address of coils to be read.
 - **quantity:** The quantity of coils to be read.
-- **callback:** The callback gets `error` and `states` as its arguments. The `states` is an array that contains the states of coils.
+- **callback:** The callback gets `error` and `states` as its arguments. The `states` is an array or buffer that contains the states of coils.
 
 #### `readDiscreteInputs(slaveAddress, startAddress, quantity, callback)`
 Function code 0x02, it is used to read from 1 to 2000 contiguous status of discrete inputs in a remote device.
 - **slaveAddress:** The address of the remote device.
 - **startAddress:** The starting address of discrete inputs to be read.
 - **quantity:** The quantity of discrete inputs to be read.
-- **callback:** The callback gets `error` and `states` as its arguments. The `states` is an array that contains the states of discrete inputs.
+- **callback:** The callback gets `error` and `states` as its arguments. The `states` is an array or buffer that contains the states of discrete inputs.
 
 ### `readHoldingRegisters(slaveAddress, startAddress, quantity, callback)`
 Function code 0x03, it is used to read the contents of a contiguous block of holding registers in a remote device.
 - **slaveAddress:** The address of the remote device.
 - **startAddress:** The starting address of holding registers to be read.
 - **quantity:** The quantity of holding registers to be read.
-- **callback:** The callback gets `error` and `values` as its arguments. The `values` is an array that contains the values of holding registers.
+- **callback:** The callback gets `error` and `values` as its arguments. The `values` is an array or buffer that contains the values of holding registers.
 
 ### `readInputRegisters(slaveAddress, startAddress, quantity, callback)`
 Function code 0x04, it is used to read from 1 to 125 contiguous input registers in a remote device.
 - **slaveAddress:** The address of the remote device.
 - **startAddress:** The starting address of input registers to be read.
 - **quantity:** The quantity of input registers to be read.
-- **callback:** The callback gets `error` and `values` as its arguments. The `values` is an array that contains the values of input registers.
+- **callback:** The callback gets `error` and `values` as its arguments. The `values` is an array or buffer that contains the values of input registers.
 
 ### `writeSingleCoil(slaveAddress, address, state, callback)`
 Function code 0x05, it is used to write a single output to either `ON` or `OFF` in a remote device.
