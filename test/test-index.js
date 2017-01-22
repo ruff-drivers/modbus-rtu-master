@@ -33,7 +33,7 @@ describe('Test modbus request data in RTU mode', function () {
                 uart.emit('data', receviedData);
             };
             modbus = new ModbusRtuMaster(uart, {
-                converted: true
+                parseSlaveData: true
             });
         });
         afterEach(function () {
@@ -263,7 +263,7 @@ describe('Test modbus request data in RTU mode', function () {
                 uart.emit('data', receviedData);
             };
             modbus = new ModbusRtuMaster(uart, {
-                converted: false
+                parseSlaveData: false
             });
         });
         afterEach(function () {

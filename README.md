@@ -20,12 +20,8 @@ Here is the basic usage of this module.
 
 ```js
 var ModbusRtuMaster = require('modbus-rtu-master');
-
 rs485 = $('#rs485');
-var modbus = new ModbusRtuMaster(rs485, {
-    convert: true,
-    charTimeout: 30
-});
+var modbus = new ModbusRtuMaster(rs485);
 var slaveAddress = 0x01;
 var startAddress = 0x03e8;
 var quantity = 8;
@@ -45,12 +41,12 @@ modbus.readHoldingRegisters(slaveAddress, startAddress, quantity, function (erro
 
 #### Class `ModbusRtuMaster(port, options)`
 The constructor function.
-- **port:** The communication port that modbus relies on, usually the port is an `UART`.
+- **port:** The communication port that modbus relies on, usually the port is an `UART`. The port must have one `write` method and can emit `data` event.
 - **options:** Some configrations to parse data from the port using mobus protocol.
   - **responseTimeout:** Optional. The response timeout of one modbus command. The default value is 500 milliseconds.
   - **charTimeout:** Optional. The minimum timestamp difference between two continuously modbus frames. The default value is 50 is milliseconds.
-  - **converted:** Optional. `converted` is an boolean, when it is `true`, the response data will be converted to an readable `Array` format according the modbus protocol,
-  otherwise, the response data will be in format of `Buffer`. The defalue vlaue is `false`.
+  - **parseSlaveData:** Optional. `parseSlaveData` is an boolean, when it is `true`, the response data will be converted to an readable `Array` format according the modbus protocol,
+  otherwise, the response data will be in format of raw `Buffer`. The defalue vlaue is `true`.
 
 #### `readCoils(slaveAddress, startAddress, quantity, callback)`
 Function code 0x01, it is used to read from 1 to 2000 contiguous status of coils in a remote device.

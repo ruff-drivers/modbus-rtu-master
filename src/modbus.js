@@ -17,7 +17,11 @@ function Modbus(port, option) {
     option = option || {};
     this._timeout = option.timeout || 4;
     this._mode = option.mode || 'rtu';
-    this._convert = option.converted || false;
+    if (option.parseSlaveData === undefined) {
+        this._parseSlaveData = true;
+    } else {
+        this._parseSlaveData = option.parseSlaveData;
+    }
 
     if (this._mode === 'rtu') {
         var Rtu = require('./rtu');
@@ -238,7 +242,7 @@ Modbus.prototype._parseReadStatusResponse = function (quantity, buffer, expectFu
     if (functionCode === expectFunctionCode) {
         var byteCount = buffer.readUInt8(2);
         var statusBuffer = buffer.slice(2);
-        var status = this._convert ? convertHandler(statusBuffer).slice(0, quantity) : statusBuffer.slice(1);
+        var status = this._parseSlaveData ? convertHandler(statusBuffer).slice(0, quantity) : statusBuffer.slice(1);
         return {
             slaveAddress: slaveAddress,
             functionCode: functionCode,
@@ -282,7 +286,7 @@ Modbus.prototype.parseWriteSingleCoilResponse = function (buffer) {
     if (functionCode === 0x05) {
         var address = buffer.readUInt16BE(2);
         var state;
-        if (this._convert) {
+        if (this._parseSlaveData) {
             state = buffer.readUInt16BE(4) === 0xFF00 ? 1 : 0;
         } else {
             state = buffer.slice(4, 6);
@@ -312,7 +316,7 @@ Modbus.prototype.parseWriteSingleRegisterResponse = function (buffer) {
 
     if (functionCode === 0x06) {
         var address = buffer.readUInt16BE(2);
-        var value = this._convert ? buffer.readUInt16BE(4) : buffer.slice(4, 6);
+        var value = this._parseSlaveData ? buffer.readUInt16BE(4) : buffer.slice(4, 6);
 
         return {
             slaveAddress: slaveAddress,

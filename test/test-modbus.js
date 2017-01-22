@@ -195,7 +195,7 @@ describe('Test modbus response data in RTU mode', function (done) {
         modbus = new Modbus(uart, {
             timeout: 5,
             mode: 'rtu',
-            converted: false
+            parseSlaveData: false
         });
     });
     it('should send expected data when invoke response 0x01 function `responseReadCoils`', function (done) {
@@ -372,7 +372,7 @@ describe('Test modbus parse request data in RTU mode', function () {
         beforeEach(function () {
             modbus = new Modbus(uart, {
                 mode: 'rtu',
-                converted: true
+                parseSlaveData: true
             });
         });
 
@@ -500,7 +500,7 @@ describe('Test modbus parse request data in RTU mode', function () {
         beforeEach(function () {
             modbus = new Modbus(uart, {
                 mode: 'rtu',
-                converted: false
+                parseSlaveData: false
             });
         });
 

@@ -14,7 +14,7 @@ function ModbusRtuMaster(port, options) {
     this._master = new Modbus(port, {
         mode: 'rtu',
         timeout: options.charTimeout || 50,
-        converted: options.converted || false
+        parseSlaveData: options.parseSlaveData === undefined ? true : options.parseSlaveData
     });
 }
 
