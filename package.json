@@ -19,8 +19,8 @@
   ],
   "main": "src/index.js",
   "engines": {
-    "ruff": ">=1.79 <2.0.0",
-    "rufflite": ">=0.7.2 <1.0.0"
+    "ruff": ">=1.7.0 <2.0.0",
+    "ruff-lite": ">=0.7.2 <1.0.0"
   },
   "scripts": {
     "install-sdk": "rvm install --local",

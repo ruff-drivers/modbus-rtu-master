@@ -57,9 +57,6 @@ describe('Test modbus request data in RTU mode', function () {
                 0, 0, 0, 1, 0, 1, 1, 0, // 0x68
                 1, 0, 1 // 0x05
             ];
-            // var b = new Buffer(2);
-            // b.writeUInt16LE(crc16(receviedData.slice(0, -2)), 0);
-            // console.log(b.toString('hex'));
 
             modbus.readCoils(slaveAddress, startAddress, quantity, function (error, status) {
                 if (error) {
