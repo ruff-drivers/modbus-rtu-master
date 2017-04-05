@@ -364,7 +364,7 @@ describe('Test modbus parse request data in RTU mode', function () {
         uart = new Uart();
         uart.write = function (data, callback) {
             callback && callback();
-            uart.emit('data', data);
+            modbus.emit('message', data.slice(0, -2));
         };
     });
 

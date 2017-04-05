@@ -15,7 +15,7 @@ function Modbus(port, option) {
     this._write = port.write.bind(port);
 
     option = option || {};
-    this._timeout = option.timeout || 4;
+    this._timeout = option.timeout;
     this._mode = option.mode || 'rtu';
     if (option.parseSlaveData === undefined) {
         this._parseSlaveData = true;
@@ -73,21 +73,29 @@ Modbus.prototype._readSlaveData = function (slaveAddress, functionCode, startAdd
 
 // Request Modbus "Read Coil Status" (FC=0x01)
 Modbus.prototype.requestReadCoils = function (slaveAddress, startAddress, quantity, callback) {
+    var expectedLength = 5 + Math.ceil(quantity / 8); // addr(1) + FC(1) + byteCount(1) + data + crc(2)
+    this._codec.try(expectedLength);
     this._readSlaveData(slaveAddress, 0x01, startAddress, quantity, callback);
 };
 
 // Request Modbus "Read Input Status" (FC=0x02)
 Modbus.prototype.requestReadDiscreteInputs = function (slaveAddress, startAddress, quantity, callback) {
+    var expectedLength = 5 + Math.ceil(quantity / 8); // addr(1) + FC(1) + byteCount(1) + data + crc(2)
+    this._codec.try(expectedLength);
     this._readSlaveData(slaveAddress, 0x02, startAddress, quantity, callback);
 };
 
 // Request Modbus "Read Holding Registers" (FC=0x03)
 Modbus.prototype.requestReadHoldingRegisters = function (slaveAddress, startAddress, quantity, callback) {
+    var expectedLength = 5 + quantity * 2; // addr(1) + FC(1) + byteCount(1) + data + crc(2)
+    this._codec.try(expectedLength);
     this._readSlaveData(slaveAddress, 0x03, startAddress, quantity, callback);
 };
 
 // Request Modbus "Read Input Registers" (FC=0x04)
 Modbus.prototype.requestReadInputRegisters = function (slaveAddress, startAddress, quantity, callback) {
+    var expectedLength = 5 + quantity * 2; // addr(1) + FC(1) + byteCount(1) + data + crc(2)
+    this._codec.try(expectedLength);
     this._readSlaveData(slaveAddress, 0x04, startAddress, quantity, callback);
 };
 
@@ -106,17 +114,20 @@ Modbus.prototype._writeSlaveSingle = function (slaveAddress, functionCode, addre
 
 // Request Modbus "Write Single Coil" (FC=0x05)
 Modbus.prototype.requestWriteSingleCoil = function (slaveAddress, address, state, callback) {
+    this._codec.try(8); // addr(1) + FC(1) + OutputAddress(2) + OutputValue(2) + crc(2)
     var value = state ? 0xFF00 : 0x0000;
     this._writeSlaveSingle(slaveAddress, 0x05, address, value, callback);
 };
 
 // Request Modbus "Write Single Register " (FC=0x06)
 Modbus.prototype.requestWriteSingleRegister = function (slaveAddress, address, value, callback) {
+    this._codec.try(8); // addr(1) + FC(1) + OutputAddress(2) + OutputValue(2) + crc(2)
     this._writeSlaveSingle(slaveAddress, 0x06, address, value, callback);
 };
 
 // Request Modbus "Write Multiple Coils" (FC=0x0F)
 Modbus.prototype.requestWriteMultipleCoils = function (slaveAddress, startAddress, states, callback) {
+    this._codec.try(8); // addr(1) + FC(1) + OutputAddress(2) + OutputValue(2) + crc(2)
     var functionCode = 0x0F;
     var buffer = new Buffer(6);
 
@@ -133,6 +144,7 @@ Modbus.prototype.requestWriteMultipleCoils = function (slaveAddress, startAddres
 
 // Request Modbus "Write Multiple Registers" (FC=0x10)
 Modbus.prototype.requestWriteMultipleRegisters = function (slaveAddress, address, values, callback) {
+    this._codec.try(8); // addr(1) + FC(1) + OutputAddress(2) + OutputValue(2) + crc(2)
     var functionCode = 0x10;
     var bufferLength = 7 + 2 * values.length;
     var buffer = new Buffer(bufferLength);

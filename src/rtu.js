@@ -13,7 +13,10 @@ function Rtu(timeout) {
     EventEmitter.call(this);
 
     this._buffer = new Buffer(0);
-    this._timeout = timeout;
+    this._timeout = timeout || 0;
+    this._timer = null;
+    this._stop = true;
+    this._expectedLength = 0;
 }
 
 util.inherits(Rtu, EventEmitter);
@@ -40,9 +43,25 @@ Rtu.prototype.encode = function (buffer) {
     return Buffer.concat([buffer, crcBuffer]);
 };
 
+Rtu.prototype.try = function (expectedLength) {
+    this._stop = false;
+    if (this._timer > 0) {
+        this._setupTimer();
+    }
+    this._buffer = new Buffer(0);
+    this._expectedLength = expectedLength;
+};
+
 Rtu.prototype.pushCodedStream = function (data) {
-    this._setupTimer();
-    this._buffer = Buffer.concat([this._buffer, data]);
+    if (!this._stop) {
+        this._buffer = Buffer.concat([this._buffer, data]);
+        if (this._buffer.length >= this._expectedLength) {
+            this._buffer = this._buffer.slice(0, this._expectedLength);
+            this._stop = true;
+            clearTimeout(this._timer);
+            this._emit();
+        }
+    }
 };
 
 Rtu.prototype._decode = function (buffer) {
