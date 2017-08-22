@@ -10,6 +10,7 @@ var Modbus = require('./modbus');
 function ModbusRtuMaster(port, options) {
     options = options || {};
     this._responseTimeout = options.responseTimeout || 500;
+    this._cmdTimeout = options.cmdTimeout || this._responseTimeout;
 
     this._master = new Modbus(port, {
         mode: 'rtu',
@@ -70,20 +71,28 @@ ModbusRtuMaster.prototype._checkResponse = function (slaveAddress, functionCode,
 
 // read status common handler
 ModbusRtuMaster.prototype._readStatus = function (requestHandler, parseHandler, checkResponseHandler, callback) {
-    var that = this;
-    requestHandler(function (error) {
+    var callbackInvoked = false;
+    this._getresponse(this._cmdTimeout, function (error, data) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        callbackInvoked = true;
         if (error) {
             callback(error);
             return;
         }
-        that._getresponse(that._responseTimeout, function (error, data) {
-            if (error) {
-                callback(error);
-                return;
-            }
-            var response = parseHandler(data);
-            checkResponseHandler(response, 'status', callback);
-        });
+        var response = parseHandler(data);
+        checkResponseHandler(response, 'status', callback);
+    });
+    requestHandler(function (error) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        if (error) {
+            callbackInvoked = true;
+            callback(error);
+            return;
+        }
     });
 };
 
@@ -134,57 +143,83 @@ ModbusRtuMaster.prototype.readInputRegisters = function (slaveAddress, startAddr
 // Modbus "Write Single Coil" (FC=0x05)
 ModbusRtuMaster.prototype.writeSingleCoil = function (slaveAddress, address, state, callback) {
     var that = this;
-    this._master.requestWriteSingleCoil(slaveAddress, address, state, function (error) {
+    var callbackInvoked = false;
+    this._getresponse(this._cmdTimeout, function (error, data) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        callbackInvoked = true;
         if (error) {
             callback(error);
             return;
         }
-        that._getresponse(that._responseTimeout, function (error, data) {
-            if (error) {
-                callback(error);
-                return;
-            }
-            var response = that._master.parseWriteSingleCoilResponse(data);
-            that._checkResponse(slaveAddress, 0x05, response, 'state', callback);
-        });
+        var response = that._master.parseWriteSingleCoilResponse(data);
+        that._checkResponse(slaveAddress, 0x05, response, 'state', callback);
+    });
+    this._master.requestWriteSingleCoil(slaveAddress, address, state, function (error) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        if (error) {
+            callbackInvoked = true;
+            callback(error);
+            return;
+        }
     });
 };
 
 // Modbus "Write Single Register" (FC=0x06)
 ModbusRtuMaster.prototype.writeSingleRegister = function (slaveAddress, address, value, callback) {
     var that = this;
-    this._master.requestWriteSingleRegister(slaveAddress, address, value, function (error) {
+    var callbackInvoked = false;
+    this._getresponse(this._cmdTimeout, function (error, data) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        callbackInvoked = true;
         if (error) {
             callback(error);
             return;
         }
-        that._getresponse(that._responseTimeout, function (error, data) {
-            if (error) {
-                callback(error);
-                return;
-            }
-            var response = that._master.parseWriteSingleRegisterResponse(data);
-            that._checkResponse(slaveAddress, 0x06, response, 'value', callback);
-        });
+        var response = that._master.parseWriteSingleRegisterResponse(data);
+        that._checkResponse(slaveAddress, 0x06, response, 'value', callback);
+    });
+    this._master.requestWriteSingleRegister(slaveAddress, address, value, function (error) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        if (error) {
+            callbackInvoked = true;
+            callback(error);
+            return;
+        }
     });
 };
 
 // write multiple common handler
 ModbusRtuMaster.prototype._writeMultiple = function (requestHandler, parseHandler, checkResponseHandler, callback) {
-    var that = this;
-    requestHandler(function (error) {
+    var callbackInvoked = false;
+    this._getresponse(this._cmdTimeout, function (error, data) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        callbackInvoked = true;
         if (error) {
             callback(error);
             return;
         }
-        that._getresponse(that._responseTimeout, function (error, data) {
-            if (error) {
-                callback(error);
-                return;
-            }
-            var response = parseHandler(data);
-            checkResponseHandler(response, 'quantity', callback);
-        });
+        var response = parseHandler(data);
+        checkResponseHandler(response, 'quantity', callback);
+    });
+    requestHandler(function (error) {
+        if (callbackInvoked === true) {
+            return;
+        }
+        if (error) {
+            callbackInvoked = true;
+            callback(error);
+            return;
+        }
     });
 };
 
