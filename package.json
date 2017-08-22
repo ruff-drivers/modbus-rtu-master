@@ -1,6 +1,6 @@
 {
   "name": "modbus-rtu-master",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The master controller of modbus-rtu protocol",
   "author": "Nanchao Inc.",
   "license": "MIT",
