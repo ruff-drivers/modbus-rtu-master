@@ -57,11 +57,19 @@ Rtu.prototype.pushCodedStream = function (data) {
         this._buffer = Buffer.concat([this._buffer, data]);
         if (this._buffer.length >= this._expectedLength) {
             this._buffer = this._buffer.slice(0, this._expectedLength);
-            this._stop = true;
-            clearTimeout(this._timer);
-            this._emit();
+            this._findFrame();
+        } else if (this._buffer.length === 5) { // addr(1) + FC(1) + exception(1) + crc(2)
+            if (this._decode(this._buffer) !== null) {
+                this._findFrame();
+            }
         }
     }
+};
+
+Rtu.prototype._findFrame = function () {
+    this._stop = true;
+    clearTimeout(this._timer);
+    this._emit();
 };
 
 Rtu.prototype._decode = function (buffer) {
