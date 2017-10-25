@@ -250,7 +250,7 @@ describe('Test modbus response data in RTU mode', function (done) {
         modbus.responseReadDiscreteInputs(slaveAddress, discreteInputsArray, done);
     });
 
-    it('should send expected data when invoke response 0x03 function `responseReadHoldingRegisters`', function () {
+    it('should send expected data when invoke response 0x03 function `responseReadHoldingRegisters`', function (done) {
         var slaveAddress = 0x01;
         var functionCode = 0x03;
         var holdingRegisters = [1, 2, 3, 4];
@@ -268,7 +268,7 @@ describe('Test modbus response data in RTU mode', function (done) {
         });
         modbus.responseReadHoldingRegisters(slaveAddress, holdingRegisters, done);
     });
-    it('should send expected data when invoke response 0x04 function `responseReadInputRegisters`', function () {
+    it('should send expected data when invoke response 0x04 function `responseReadInputRegisters`', function (done) {
         var slaveAddress = 0x01;
         var functionCode = 0x04;
         var inputRegisters = [1, 2, 3, 4];
@@ -286,7 +286,7 @@ describe('Test modbus response data in RTU mode', function (done) {
         });
         modbus.responseReadInputRegisters(slaveAddress, inputRegisters, done);
     });
-    it('should send expected data when invoke response 0x05 function `responseWriteSingleCoil`', function () {
+    it('should send expected data when invoke response 0x05 function `responseWriteSingleCoil`', function (done) {
         var slaveAddress = 0x01;
         var functionCode = 0x05;
         var address = 0x01;
@@ -303,7 +303,7 @@ describe('Test modbus response data in RTU mode', function (done) {
         });
         modbus.responseWriteSingleCoil(slaveAddress, address, state, done);
     });
-    it('should send expected data when invoke response 0x06 function `responseWriteSingleRegister`', function () {
+    it('should send expected data when invoke response 0x06 function `responseWriteSingleRegister`', function (done) {
         var slaveAddress = 0x01;
         var functionCode = 0x06;
         var address = 0x01;
@@ -320,7 +320,7 @@ describe('Test modbus response data in RTU mode', function (done) {
         });
         modbus.responseWriteSingleRegister(slaveAddress, address, value, done);
     });
-    it('should send expected data when invoke response 0x0F function `responseWriteMultipleCoils`', function () {
+    it('should send expected data when invoke response 0x0F function `responseWriteMultipleCoils`', function (done) {
         var slaveAddress = 0x01;
         var functionCode = 0x0F;
         var address = 0x01;
@@ -335,9 +335,9 @@ describe('Test modbus response data in RTU mode', function (done) {
         when(uart).write(expectedData, Function).then(function (data, callback) {
             callback();
         });
-        modbus.responseWriteSingleRegister(slaveAddress, address, value, done);
+        modbus.responseWriteMultipleCoils(slaveAddress, address, value, done);
     });
-    it('should send expected data when invoke response 0x10 function `responseWriteMultipleRegisters`', function () {
+    it('should send expected data when invoke response 0x10 function `responseWriteMultipleRegisters`', function (done) {
         var slaveAddress = 0x01;
         var functionCode = 0x10;
         var address = 0x01;
@@ -352,7 +352,7 @@ describe('Test modbus response data in RTU mode', function (done) {
         when(uart).write(expectedData, Function).then(function (data, callback) {
             callback();
         });
-        modbus.responseWriteSingleRegister(slaveAddress, address, value, done);
+        modbus.responseWriteMultipleRegisters(slaveAddress, address, value, done);
     });
 });
 
