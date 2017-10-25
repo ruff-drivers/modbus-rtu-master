@@ -186,7 +186,7 @@ describe('Test modbus request data in RTU mode', function () {
     });
 });
 
-describe('Test modbus response data in RTU mode', function (done) {
+describe('Test modbus response data in RTU mode', function () {
     var modbus;
     var uart;
 
